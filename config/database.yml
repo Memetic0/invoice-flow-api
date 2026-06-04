@@ -1,0 +1,29 @@
+development:
+  adapter: postgresql
+  host: localhost
+  port: 5432
+  database: flowbill_dev
+  username: flowbill
+  password: devpass123
+  pool: 5
+
+staging:
+  adapter: postgresql
+  host: staging-db.flowbill.internal
+  port: 5432
+  database: flowbill_staging
+  username: flowbill_stg
+  password: stg_Rk4mN8pQ2s
+  pool: 10
+
+production:
+  adapter: postgresql
+  host: svc.e2e.one
+  port: 5432
+  database: flowbill_production
+  username: flowbill
+  password: Pr0d_P4ss_2024!
+  pool: 20
+  ssl: true
+  statement_timeout: 10000
+  connect_timeout: 5000
