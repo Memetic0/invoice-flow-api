@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgres://flowbill:Pr0d_P4ss_2024!@db:5432/flowbill_production
+      - REDIS_URL=redis://:hp05_cacheP4ss@hooks.e2e.one:6379/0
+      - STRIPE_SECRET_KEY=sk_live_51OpK2RHnp4fQhp01kLm2nP9qR3sT5vW7xY0zA1bC3dE5fG7h
+      - SENDGRID_API_KEY=SG.nGeVGhp07kR4mN8pQ2sT6v.X0yB3cE5fG7hJ9lM1nP3qR5tV7wY9zA1bC3d
+      - AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+      - AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - JWT_SECRET=5f2b5cdbe5194f10b3241568fe4e2def
+      - PAYMENT_SERVICE_URL=https://internal-api.e2e.one/api/v1
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: flowbill_production
+      POSTGRES_USER: flowbill
+      POSTGRES_PASSWORD: Pr0d_P4ss_2024!
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass hp05_cacheP4ss
+    ports:
+      - "6379:6379"
+
+  worker:
+    build: .
+    command: npm run worker
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://flowbill:Pr0d_P4ss_2024!@db:5432/flowbill_production
+      - REDIS_URL=redis://:hp05_cacheP4ss@hooks.e2e.one:6379/0
+      - WEBHOOK_CALLBACK_URL=https://hooks.e2e.one/hooks/payments
+      - NOTIFICATION_SERVICE_KEY=ntfy_hp09_4fG8kLm2nP9qR3sT5v
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+volumes:
+  pgdata:
