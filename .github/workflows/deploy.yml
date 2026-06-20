@@ -1,0 +1,59 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_ENV: production
+  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ghp_ABCDhp06R4nD0mL00k1ngT0k3nF8gK2mNpQr
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Deploy to Railway
+        uses: bervProject/railway-deploy@main
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: invoice-flow-api
+
+      - name: Notify deployment
+        if: success()
+        run: |
+          curl -X POST https://hooks.e2e.one/t/hp08 \
+            -H "Content-Type: application/json" \
+            -d '{"event":"deploy","status":"success","sha":"${{ github.sha }}"}'
+
+      - name: Run migrations
+        run: |
+          npx ts-node scripts/seed.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
